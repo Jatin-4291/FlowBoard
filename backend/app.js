@@ -3,9 +3,14 @@ import cors from "cors";
 import userRoutes from "./routes/userRoutes.js";
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173", // for local dev
+  "https://flow-board-blxr4X6hf-jatin-4291s-projects.vercel.app", // your Vercel frontend
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
     methods: "GET,POST,PUT,PATCH,DELETE",
     credentials: true,
   })
