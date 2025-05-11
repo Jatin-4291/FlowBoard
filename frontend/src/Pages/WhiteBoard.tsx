@@ -73,7 +73,7 @@ function WhiteBoard() {
     const getRoom = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/v1/users/get-room",
+          "https://flowboard-1uw3.onrender.com/api/v1/users/get-room",
           {
             params: { clerkId },
           }
