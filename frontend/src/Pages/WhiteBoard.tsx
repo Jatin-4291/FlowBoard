@@ -17,7 +17,7 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "../../@/Components/ui/hover-card";
+} from "@/Components/ui/hover-card";
 import {
   Dialog,
   DialogContent,
