@@ -6,6 +6,7 @@ import {
   useImagesState,
   useWhiteboardStore,
 } from "../Context/create";
+import { KonvaEventObject } from "konva/lib/Node";
 import Konva from "konva";
 import socket from "../socket";
 import UserName from "../Components/UserName";
@@ -16,7 +17,7 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "../../@/components/ui/hover-card";
+} from "../../@/Components/ui/hover-card";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@/Components/ui/dialog";
 import {
   Sheet,
   SheetContent,
@@ -32,7 +33,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
+} from "@/Components/ui/sheet";
 import ChatBox from "../Components/ChatBox";
 // Define types
 type PencilData = { points: number[] };
@@ -88,7 +89,7 @@ function WhiteBoard() {
     };
 
     getRoom();
-  }, [clerkId]);
+  }, [clerkId, setCurrentRoom]);
 
   // ✅ Logs AFTER RoomId and currentRoom updates
   useEffect(() => {
@@ -100,7 +101,7 @@ function WhiteBoard() {
     if (image && newImage && !localImages.includes(newImage)) {
       setLocalImages((prevImages) => [...prevImages, newImage]);
     }
-  }, [newImage, image]);
+  }, [newImage, image, localImages]);
   // ✅ Ensures socket emits only when currentRoom is updated
   useEffect(() => {
     if (!currentRoom || !clerkId) return;
@@ -306,7 +307,7 @@ function WhiteBoard() {
     });
   };
 
-  const handleWheel = (e: any) => {
+  const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
     const stage = stageRef.current;
     if (!stage) return;
@@ -329,9 +330,9 @@ function WhiteBoard() {
   };
 
   // Handle Panning
-  const handleDragMove = (e: any) => {
-    setStagePosition({ x: e.target.x(), y: e.target.y() });
-  };
+  // const handleDragMove = (e: KonvaEventObject<WheelEvent>) => {
+  //   setStagePosition({ x: e.target.x(), y: e.target.y() });
+  // };
   // 🖊️ Handle Mouse Down (Start Drawing)
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const pos = e.target.getStage()?.getRelativePointerPosition();
@@ -520,7 +521,7 @@ function WhiteBoard() {
               <SheetTitle>Are you absolutely sure?</SheetTitle>
               <SheetDescription></SheetDescription>
               <div>
-                <ChatBox currentRoom={currentRoom} clerkId={clerkId} />
+                <ChatBox currentRoom={currentRoom} clerkId={clerkId ?? ""} />
               </div>
             </SheetHeader>
           </SheetContent>

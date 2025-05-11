@@ -34,9 +34,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentRoom, clerkId }) => {
     if (!input.trim()) return; // Avoid sending empty messages
 
     // Find the sender's name based on the clerkId
-    const sender = users.find((user) => user.id === clerkId);
-    console.log("sender", sender.name);
-
+    const sender = users.find((user) => user.clerkId === clerkId);
     const senderName = sender ? sender.name : "Unknown";
 
     const newMessage = { clerkId, name: senderName, messages: [input] };
@@ -81,7 +79,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentRoom, clerkId }) => {
     return () => {
       socket.off("receiveMessage");
     };
-  }, []);
+  }, [currentRoom]);
   console.log(users);
 
   console.log("Messages:", messages);
@@ -110,7 +108,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentRoom, clerkId }) => {
       {/* Messages Display */}
       <div className="h-4/6 overflow-y-auto p-4 space-y-4">
         {messages.map((userMessages, index) => {
-          const currentUser = users.find((user) => user.userId === clerkId);
+          const currentUser = users.find((user) => user.clerkId === clerkId);
           return (
             <div key={index} className="flex flex-col">
               <span className="font-bold text-gray-700">

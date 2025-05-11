@@ -16,13 +16,13 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/Components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/Components/ui/tooltip";
 
 import { useState } from "react";
 import { useCurrentRoomStore, useWhiteboardStore } from "../Context/create";

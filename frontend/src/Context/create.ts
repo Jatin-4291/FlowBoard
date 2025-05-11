@@ -1,4 +1,3 @@
-import { X } from "lucide-react";
 import { create } from "zustand";
 
 interface WhiteboardState {
@@ -11,7 +10,7 @@ interface WhiteboardState {
     | "removeAll"
     | "brush"
     | "fillcolor"
-    | null;
+    | null; // Keep null as a valid state for activeTool
   setActiveTool: (
     tool:
       | "pencil"
@@ -22,6 +21,7 @@ interface WhiteboardState {
       | "removeAll"
       | "brush"
       | "fillcolor"
+      | null // Allow null
   ) => void;
 
   lineWidth: number;
@@ -34,7 +34,7 @@ interface WhiteboardState {
 
 export const useWhiteboardStore = create<WhiteboardState>((set) => ({
   activeTool: null,
-  setActiveTool: (tool) => set({ activeTool: tool }),
+  setActiveTool: (tool) => set({ activeTool: tool }), // Now accepts null
   lineWidth: 10,
   setLineWidth: (lineWidth) => set({ lineWidth }),
   lineColor: "black",
@@ -43,18 +43,19 @@ export const useWhiteboardStore = create<WhiteboardState>((set) => ({
   setFillColor: (fillColor) => set({ fillColor }),
 }));
 
-interface currentRoomState {
-  currentRoom: string | null;
+interface CurrentRoomState {
+  currentRoom: string | "";
   setCurrentRoom: (room: string) => void;
 }
-export const useCurrentRoomStore = create<currentRoomState>((set) => ({
-  currentRoom: null, // Initially, no room is active
+
+export const useCurrentRoomStore = create<CurrentRoomState>((set) => ({
+  currentRoom: "", // Initially, no room is active
   setCurrentRoom: (room) => set({ currentRoom: room }),
 }));
 
 interface ImagesState {
   image: string;
-  setImage: (images: string) => void;
+  setImage: (image: string) => void;
 }
 
 export const useImagesState = create<ImagesState>((set) => ({
