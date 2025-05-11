@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import userRoutes from "./routes/userRoutes.js";
+import userRoutes from "./Routes/userRoutes.js";
 import http from "http";
 import { Server } from "socket.io";
 import mongoose from "mongoose";
