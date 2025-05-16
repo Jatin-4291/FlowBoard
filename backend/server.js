@@ -136,12 +136,14 @@ mongoose
     // ✅ Start Server After DB Connects
     const server = http.createServer(app);
     const io = new Server(server, {
-      origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
-        }
+      cors: {
+        origin: function (origin, callback) {
+          if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+          } else {
+            callback(new Error("Not allowed by CORS"));
+          }
+        },
       },
       credentials: true,
     });
