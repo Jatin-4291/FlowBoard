@@ -24,6 +24,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "https://flow-board-three.vercel.app",
+  /^https:\/\/flow-board-.*\.vercel\.app$/,
 ];
 app.use(
   cors({
