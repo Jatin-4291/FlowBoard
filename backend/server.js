@@ -23,8 +23,8 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://flow-board-three.vercel.app",
-  /^https:\/\/flow-board-.*\.vercel\.app$/,
+  "https://flow-board-q4kyrhp5e-jatin-4291s-projects.vercel.app",
+  // /^https:\/\/flow-board-.*\.vercel\.app$/,
 ];
 app.use(
   cors({
