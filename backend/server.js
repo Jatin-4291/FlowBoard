@@ -135,10 +135,14 @@ mongoose
     // ✅ Start Server After DB Connects
     const server = http.createServer(app);
     const io = new Server(server, {
-      cors: {
-        origin: "http://localhost:5173",
-        methods: ["GET", "POST"],
+      origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
       },
+      credentials: true,
     });
 
     let canvasData = { pencil: [], lines: [], circles: [] };
