@@ -5,7 +5,7 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173", // for local dev
-  "https://flow-board-blxr4x6hf-jatin-4291s-projects.vercel.app", // your Vercel frontend
+  "https://flow-board-three.vercel.app/", // your Vercel frontend
 ];
 
 app.use(
