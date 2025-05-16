@@ -144,8 +144,13 @@ mongoose
             callback(new Error("Not allowed by CORS"));
           }
         },
+        headers: [
+          "Access-Control-Allow-Origin",
+          "Access-Control-Allow-Credentials",
+          "Content-Type",
+        ],
+        methods: ["GET", "POST"],
       },
-      credentials: true,
     });
 
     let canvasData = { pencil: [], lines: [], circles: [] };
