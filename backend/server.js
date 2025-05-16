@@ -21,11 +21,9 @@ dotenv.config();
 
 const app = express();
 
-// ✅ CORS Setup
-
 const allowedOrigins = [
-  "http://localhost:5173", // for local dev
-  "https://flow-board-three.vercel.app", // your Vercel frontend
+  "http://localhost:5173",
+  "https://flow-board-three.vercel.app",
 ];
 app.use(
   cors({
@@ -39,8 +37,7 @@ app.use(
     credentials: true,
   })
 );
-
-// ✅ Webhook-specific middleware: raw body parser for signature verification
+// ✅ Middleware to parse JSON bodies
 app.post(
   "/api/webhooks",
   bodyParser.raw({ type: "application/json" }),
