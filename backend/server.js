@@ -212,8 +212,8 @@ mongoose
 
         if (erasedLines) {
           io.to(currentRoom).emit("eraseLines", {
-            pencil: erasedLines.pencil, // NOT eraseLines.pencil
-            brush: erasedLines.brush,
+            pencil: data.pencil, // NOT eraseLines.pencil
+            brush: data.brush,
           });
         }
       });
