@@ -16,6 +16,7 @@ import {
   eraseLines,
   removeAllData,
   dragData,
+  transformData,
 } from "./Controllers/boardControlllers.js";
 dotenv.config();
 
@@ -222,6 +223,7 @@ mongoose
       socket.on("transformObjects", async ({ currentRoom, data }) => {
         console.log(`Transforming objects for room: ${currentRoom}`, data);
         const transformObjects = await transformData(currentRoom, data);
+        io.to(currentRoom).emit("transformObjects", transformObjects); // just the updated piece
       });
       socket.on("removeAllData", async (currentRoom) => {
         console.log(`Removing all data for room: ${currentRoom}`);

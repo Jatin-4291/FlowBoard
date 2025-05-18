@@ -211,6 +211,18 @@ function WhiteBoard() {
         });
       }
     });
+    socket.on("transformObejcts", (data) => {
+      console.log("Received transform objects:", data);
+
+      if (data.type === "image") {
+        setLocalImages((prev) => {
+          const updated = [...prev];
+          updated[data.index].width = data.points.width;
+          updated[data.index].height = data.points.height;
+          return updated;
+        });
+      }
+    });
     socket.on("removeAllData", (data) => {
       console.log("Received remove all data:", data);
       console.log(data);
