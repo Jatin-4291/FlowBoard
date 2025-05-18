@@ -211,7 +211,10 @@ mongoose
         console.log(erasedLines);
 
         if (erasedLines) {
-          io.to(currentRoom).emit("eraseLines", erasedLines);
+          io.to(currentRoom).emit("eraseLines", {
+            pencil: eraseLines.pencil,
+            brush: eraseLines.brush,
+          });
         }
       });
       socket.on("dragObjects", async ({ currentRoom, data }) => {

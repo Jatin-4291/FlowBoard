@@ -72,19 +72,20 @@ export const createBoard = async (currentRoom, clerkId) => {
 };
 
 export const eraseLines = async (currentRoom, data) => {
-  const update = data.pencil
-    ? { $set: { pencil: data.pencil } }
-    : { $set: { brush: data.brush } };
+  const update = {
+    ...(data.pencil && { pencil: data.pencil }),
+    ...(data.brush && { brush: data.brush }),
+  };
 
   const updatedBoard = await Board.findOneAndUpdate(
     { roomId: currentRoom },
-    update,
+    { $set: update },
     { new: true, runValidators: true }
   );
 
   if (!updatedBoard) {
     console.log(`⚠️ Board with roomId ${currentRoom} not found`);
-    return null;
+    return;
   }
 
   console.log(`✅ Canvas updated for room: ${currentRoom}`);

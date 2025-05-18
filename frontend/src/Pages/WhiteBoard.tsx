@@ -96,7 +96,6 @@ function WhiteBoard() {
   >({});
 
   const { user } = useUser();
-  console.log(user);
 
   const clerkId = user?.id;
 
@@ -128,6 +127,7 @@ function WhiteBoard() {
         },
       }));
     });
+    console.log("Remote Cursors:", remoteCursors);
 
     return () => {
       socket.off("cursorMove");
@@ -217,9 +217,10 @@ function WhiteBoard() {
 
     socket.on("eraseLines", (data) => {
       console.log("Received erase lines:", data);
-      setPencil(data.pencil || []);
-      setBrush(data.brush || []);
+      if (data.pencil) setPencil(data.pencil);
+      if (data.brush) setBrush(data.brush);
     });
+
     socket.on("dragObjects", (data) => {
       console.log("Received drag objects:", data);
 
@@ -431,8 +432,12 @@ function WhiteBoard() {
     const stage = e.target.getStage();
     const pointer = stage?.getRelativePointerPosition();
     if (!pointer) return;
+
+    let updatedPencil: any[] = [];
+    let updatedBrush: any[] = [];
+
     setPencil((prev = []) => {
-      const updatedPencil = prev.filter(
+      updatedPencil = prev.filter(
         (stroke) =>
           !stroke.points.some(
             (point, index) =>
@@ -441,16 +446,11 @@ function WhiteBoard() {
               Math.abs(stroke.points[index + 1] - pointer.y) < 10
           )
       );
-
-      socket.emit("eraseLines", {
-        currentRoom,
-        data: { pencil: updatedPencil },
-      });
-
       return updatedPencil;
     });
+
     setBrush((prev = []) => {
-      const updatedBrush = prev.filter(
+      updatedBrush = prev.filter(
         (stroke) =>
           !stroke.points.some(
             (point, index) =>
@@ -459,15 +459,19 @@ function WhiteBoard() {
               Math.abs(stroke.points[index + 1] - pointer.y) < 10
           )
       );
-
-      socket.emit("eraseLines", {
-        currentRoom,
-        data: { brush: updatedBrush },
-      });
-
       return updatedBrush;
     });
+
+    // Emit both updated at once
+    socket.emit("eraseLines", {
+      currentRoom,
+      data: {
+        pencil: updatedPencil,
+        brush: updatedBrush,
+      },
+    });
   };
+
   const handleFillColor = (
     e: Konva.KonvaEventObject<MouseEvent>,
     points: number[]
