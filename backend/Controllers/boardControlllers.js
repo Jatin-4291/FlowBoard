@@ -126,6 +126,8 @@ export const removeAllData = async (currentRoom) => {
           pencil: [],
           circles: [],
           lines: [],
+          brush: [],
+          images: [],
         },
       },
       { new: true, runValidators: true }

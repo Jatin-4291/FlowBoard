@@ -147,11 +147,26 @@ function WhiteBoard() {
       setCircle(data.circles || []);
       setBrush(data.brush || []);
       if (data.images && Array.isArray(data.images)) {
-        Promise.all(data.images.map(loadImageFromBase64)).then(
-          (imageElements) => {
-            setLocalImages(imageElements);
-          }
+        const validImages = data.images.filter(
+          (img: string) => img && img.trim() !== ""
         );
+
+        Promise.allSettled(validImages.map(loadImageFromBase64))
+          .then((results) => {
+            const successfulImages = results
+              .filter((r) => r.status === "fulfilled")
+              .map((r) => r.value);
+            setLocalImages(successfulImages);
+            setTimeout(() => {
+              if (trRef.current && imageRefs.current.length > 0) {
+                trRef.current.nodes(imageRefs.current);
+                trRef.current.getLayer()?.batchDraw();
+              }
+            }, 50);
+          })
+          .catch((error) => {
+            console.error("Error loading images:", error);
+          });
       }
     });
     socket.on("eraseLines", (data) => {
@@ -180,9 +195,12 @@ function WhiteBoard() {
     });
     socket.on("removeAllData", (data) => {
       console.log("Received remove all data:", data);
+      console.log(data);
+
       setPencil(data.pencil);
       setLines(data.lines);
       setCircle(data.circles);
+      setBrush(data.brush);
     });
     return () => {
       socket.off("loadCanvas");
