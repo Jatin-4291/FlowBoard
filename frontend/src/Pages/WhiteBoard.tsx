@@ -35,12 +35,25 @@ import {
   SheetTrigger,
 } from "@/Components/ui/sheet";
 import ChatBox from "../Components/ChatBox";
-import { Transform } from "stream";
 // Define types
 type PencilData = { points: number[] };
 type LineData = number[];
 type CircleData = { points: number[]; color?: string };
 type BrushData = { points: number[]; color: string; width: number };
+type ImageData = {
+  image: HTMLImageElement;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+type IncomingImagePayload = {
+  src: string; // base64
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 function WhiteBoard() {
   const { activeTool, lineColor, lineWidth, fillColor } = useWhiteboardStore();
@@ -59,7 +72,7 @@ function WhiteBoard() {
   const [erasing, setErasing] = useState(false);
   const { image } = useImagesState();
   const [newImage] = useImage(image);
-  const [localImages, setLocalImages] = useState<HTMLImageElement[]>([]);
+  const [localImages, setLocalImages] = useState<ImageData[]>([]);
   const imageRefs = useRef<Konva.Image[]>([]);
   const trRef = useRef<Konva.Transformer>(null);
 
@@ -70,12 +83,7 @@ function WhiteBoard() {
   const isDrawing = useRef(false);
 
   useEffect(() => {
-    if (trRef.current && imageRefs.current.length > 0) {
-      trRef.current.nodes(imageRefs.current);
-      trRef.current.getLayer()?.batchDraw();
-    }
-  }, [localImages]);
-  useEffect(() => {
+    if (!image) return;
     socket.emit("updateCanvas", {
       currentRoom,
       data: {
@@ -83,7 +91,7 @@ function WhiteBoard() {
         lines: [],
         circles: [],
         brush: [],
-        image: image,
+        image: { image, x: 50, y: 50, width: 100, height: 100 },
       },
     });
   }, [image, currentRoom]);
@@ -117,9 +125,19 @@ function WhiteBoard() {
     console.log("Updated currentRoom:", currentRoom);
   }, [RoomId, currentRoom]);
   useEffect(() => {
-    // Only push if image is non-empty, newImage is loaded, and not already in localImages
-    if (image && newImage && !localImages.includes(newImage)) {
-      setLocalImages((prevImages) => [...prevImages, newImage]);
+    if (
+      image &&
+      newImage &&
+      !localImages.some((img) => img.image.src === newImage.src)
+    ) {
+      const imageData: ImageData = {
+        image: newImage,
+        x: 50 + localImages.length * 20,
+        y: 50 + localImages.length * 20,
+        width: 100,
+        height: 100,
+      };
+      setLocalImages((prev) => [...prev, imageData]);
     }
   }, [newImage, image, localImages]);
   // ✅ Ensures socket emits only when currentRoom is updated
@@ -147,22 +165,32 @@ function WhiteBoard() {
       setCircle(data.circles || []);
       setBrush(data.brush || []);
       if (data.images && Array.isArray(data.images)) {
-        const validImages = data.images.filter(
-          (img: string) => img && img.trim() !== ""
-        );
-
-        Promise.allSettled(validImages.map(loadImageFromBase64))
+        Promise.allSettled(
+          data.images.map((img: IncomingImagePayload) =>
+            loadImageFromBase64(img)
+          )
+        )
           .then((results) => {
-            const successfulImages = results
-              .filter((r) => r.status === "fulfilled")
-              .map((r) => r.value);
-            setLocalImages(successfulImages);
-            setTimeout(() => {
-              if (trRef.current && imageRefs.current.length > 0) {
-                trRef.current.nodes(imageRefs.current);
-                trRef.current.getLayer()?.batchDraw();
-              }
-            }, 50);
+            const imageDataArray: ImageData[] = results
+              .map((res, index) => {
+                console.log(res, index);
+
+                if (res.status === "fulfilled") {
+                  const baseData = validImages[index];
+                  return {
+                    image: res.value,
+                    x: baseData.x,
+                    y: baseData.y,
+                    width: baseData.width,
+                    height: baseData.height,
+                  } as ImageData;
+                }
+                return null;
+              })
+              .filter((item): item is ImageData => item !== null);
+
+            imageRefs.current = [];
+            setLocalImages(imageDataArray);
           })
           .catch((error) => {
             console.error("Error loading images:", error);
@@ -232,18 +260,28 @@ function WhiteBoard() {
   //     console.log(selectedShape);
   //   }
   // };
-  const loadImageFromBase64 = (base64: string): Promise<HTMLImageElement> => {
+  const loadImageFromBase64 = (
+    data: IncomingImagePayload
+  ): Promise<ImageData> => {
     return new Promise((resolve, reject) => {
       const img = new window.Image();
-      img.src = base64;
-      img.onload = () => resolve(img);
+      img.src = data.src;
+      img.onload = () => {
+        resolve({
+          image: img,
+          x: data.x,
+          y: data.y,
+          width: data.width,
+          height: data.height,
+        });
+      };
       img.onerror = (err) => reject(err);
     });
   };
 
   const handleDragEnd = (
     e: Konva.KonvaEventObject<DragEvent>,
-    type: "line" | "circle",
+    type: "line" | "circle" | "image",
     index: number
   ) => {
     const newPos = { x: e.target.x(), y: e.target.y() };
@@ -689,18 +727,25 @@ function WhiteBoard() {
                 lineCap="round"
               />
             ))}
-            {localImages.map((src, i) => (
+            {localImages.map((imageData, i) => (
               <Image
                 key={i}
                 ref={(node) => {
                   if (node) imageRefs.current[i] = node;
                 }}
-                image={src}
-                x={50 + i * 20}
-                y={50 + i * 20}
-                width={100}
-                height={100}
+                image={imageData.image}
+                x={imageData.x}
+                y={imageData.y}
+                width={imageData.width}
+                height={imageData.height}
                 draggable
+                onClick={() => {
+                  const node = imageRefs.current[i];
+                  if (node && trRef.current) {
+                    trRef.current.nodes([node]);
+                    trRef.current.getLayer()?.batchDraw();
+                  }
+                }}
               />
             ))}
             <Transformer ref={trRef} />
