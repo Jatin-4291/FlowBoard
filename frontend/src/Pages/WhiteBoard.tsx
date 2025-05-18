@@ -371,12 +371,15 @@ function WhiteBoard() {
           width: node.width() * scaleX,
           height: node.height() * scaleY,
         };
-        socket.emit("transformObejcts", {
+        console.log("transforming image", updated[index]);
+        const imageWidth = updated[index].width;
+        const imageHeight = updated[index].height;
+        socket.emit("transformObjects", {
           currentRoom,
           data: {
             type: "image",
             index,
-            points: updated[index],
+            points: [imageWidth, imageHeight],
           },
         });
         return updated;

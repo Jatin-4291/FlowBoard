@@ -128,8 +128,8 @@ export const transformData = async (currentRoom, data) => {
   try {
     const update = {};
     if (data.type === "image") {
-      const key = `images.${data.index}`;
-      update[key] = { width: data.points.width, height: data.points.height };
+      update[`images.${data.index}.width`] = data.points[0];
+      update[`images.${data.index}.height`] = data.points[1];
     }
 
     const updatedBoard = await Board.findOneAndUpdate(
