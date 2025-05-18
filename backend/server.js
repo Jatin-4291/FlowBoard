@@ -226,6 +226,15 @@ mongoose
         const transformObjects = await transformData(currentRoom, data);
         io.to(currentRoom).emit("transformObjects", transformObjects); // just the updated piece
       });
+      socket.on("cursorMove", (data) => {
+        // Broadcast cursor data to everyone else in the same room
+        socket.to(data.roomId).emit("cursorMove", {
+          name: data.name,
+          color: data.color,
+          x: data.x,
+          y: data.y,
+        });
+      });
       socket.on("removeAllData", async (currentRoom) => {
         console.log(`Removing all data for room: ${currentRoom}`);
         const removeAll = await removeAllData(currentRoom);

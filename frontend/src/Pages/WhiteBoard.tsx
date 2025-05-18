@@ -1,5 +1,13 @@
-import { useState, useRef, useEffect } from "react";
-import { Stage, Layer, Line, Circle, Image, Transformer } from "react-konva";
+import { useState, useRef, useEffect, Fragment } from "react";
+import {
+  Stage,
+  Layer,
+  Line,
+  Circle,
+  Image,
+  Transformer,
+  Text,
+} from "react-konva";
 import SideBar from "../Components/SideBar";
 import {
   useCurrentRoomStore,
@@ -7,6 +15,7 @@ import {
   useWhiteboardStore,
 } from "../Context/create";
 import { KonvaEventObject } from "konva/lib/Node";
+import { throttle } from "lodash";
 import Konva from "konva";
 import socket from "../socket";
 import UserName from "../Components/UserName";
@@ -74,7 +83,20 @@ function WhiteBoard() {
   const imageRefs = useRef<Konva.Image[]>([]);
   const trRef = useRef<Konva.Transformer>(null);
 
+  const [remoteCursors, setRemoteCursors] = useState<
+    Record<
+      string,
+      {
+        x: number;
+        y: number;
+        name: string;
+        color: string;
+      }
+    >
+  >({});
+
   const { user } = useUser();
+  console.log(user);
 
   const clerkId = user?.id;
 
@@ -93,6 +115,24 @@ function WhiteBoard() {
       },
     });
   }, [image, currentRoom]);
+
+  useEffect(() => {
+    socket.on("cursorMove", (data) => {
+      setRemoteCursors((prev) => ({
+        ...prev,
+        [data.userId]: {
+          x: data.x,
+          y: data.y,
+          name: data.name,
+          color: data.color,
+        },
+      }));
+    });
+
+    return () => {
+      socket.off("cursorMove");
+    };
+  }, []);
 
   useEffect(() => {
     if (!clerkId) return; // Ensure clerkId is available before making the request
@@ -374,7 +414,7 @@ function WhiteBoard() {
         console.log("transforming image", updated[index]);
         const imageWidth = updated[index].width;
         const imageHeight = updated[index].height;
-        socket.emit("transformObjects", {
+        socket.emit("transformObejcts", {
           currentRoom,
           data: {
             type: "image",
@@ -510,13 +550,25 @@ function WhiteBoard() {
     }
   };
 
+  const throttledEmit = throttle((x: number, y: number) => {
+    socket.emit("cursorMove", {
+      roomId: currentRoom,
+      name: user?.firstName,
+      color: "#A8DADC",
+      x,
+      y,
+    });
+  }, 300);
   // ✍️ Handle Mouse Move (Update Line)
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    if (!isDrawing.current) return;
-
     const pos = e.target.getStage()?.getRelativePointerPosition();
     if (!pos) return;
 
+    if (pos) {
+      throttledEmit(pos.x, pos.y);
+    }
+
+    if (!isDrawing.current) return;
     if (activeTool === "pencil") {
       setPencil((prev = []) => {
         if (prev.length === 0) return prev;
@@ -808,6 +860,24 @@ function WhiteBoard() {
               />
             ))}
             <Transformer ref={trRef} />
+
+            {Object.entries(remoteCursors).map(([id, cursor]) => (
+              <Fragment key={id}>
+                <Circle
+                  x={cursor.x}
+                  y={cursor.y}
+                  radius={5}
+                  fill={cursor.color}
+                />
+                <Text
+                  x={cursor.x + 8}
+                  y={cursor.y - 5}
+                  text={cursor.name}
+                  fontSize={14}
+                  fill={cursor.color}
+                />
+              </Fragment>
+            ))}
           </Layer>
         </Stage>
       </div>
