@@ -207,16 +207,17 @@ mongoose
       socket.on("eraseLines", async ({ currentRoom, data }) => {
         console.log(`Erasing lines for room: ${currentRoom}`, data);
 
-        const erasedLines = await eraseLines(currentRoom, data);
-        console.log(erasedLines);
+        const erasedLines = await eraseLines(currentRoom, data); // correct variable
+        console.log("erased", erasedLines);
 
         if (erasedLines) {
           io.to(currentRoom).emit("eraseLines", {
-            pencil: eraseLines.pencil,
-            brush: eraseLines.brush,
+            pencil: erasedLines.pencil, // NOT eraseLines.pencil
+            brush: erasedLines.brush,
           });
         }
       });
+
       socket.on("dragObjects", async ({ currentRoom, data }) => {
         console.log(`Dragging objects for room: ${currentRoom}`, data);
 
