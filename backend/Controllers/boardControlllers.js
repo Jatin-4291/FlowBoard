@@ -23,7 +23,11 @@ export const updateBoard = async (
     existingBoard.circles.push(...newCircles);
     existingBoard.lines.push(...newLines);
     existingBoard.brush.push(...newBrush);
-    existingBoard.images.push(newImage);
+    if (newImage && newImage.image) {
+      existingBoard.images.push(newImage);
+    } else {
+      console.warn("⚠️ Skipping image push due to invalid data:", newImage);
+    }
 
     // Save the updated board
     await existingBoard.save();
