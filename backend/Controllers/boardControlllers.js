@@ -99,8 +99,8 @@ export const dragData = async (currentRoom, data) => {
       const key = `lines.${data.index}.points`;
       update[key] = data.points;
     } else if (data.type === "image") {
-      const key = `images.${data.index}`;
-      update[key] = { x: data.points[0], y: data.points[1] };
+      update[`images.${data.index}.x`] = data.points[0];
+      update[`images.${data.index}.y`] = data.points[1];
     }
 
     const updatedBoard = await Board.findOneAndUpdate(
