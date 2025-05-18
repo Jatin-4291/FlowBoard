@@ -132,7 +132,7 @@ function WhiteBoard() {
     return () => {
       socket.off("cursorMove");
     };
-  }, []);
+  }, [remoteCursors]);
 
   useEffect(() => {
     if (!clerkId) return; // Ensure clerkId is available before making the request
@@ -248,7 +248,7 @@ function WhiteBoard() {
         });
       }
     });
-    socket.on("transformObejcts", (data) => {
+    socket.on("transformObjects", (data) => {
       console.log("Received transform objects:", data);
 
       if (data.type === "image") {
@@ -268,6 +268,8 @@ function WhiteBoard() {
       setLines(data.lines);
       setCircle(data.circles);
       setBrush(data.brush);
+      setLocalImages(data.images);
+      imageRefs.current = [];
     });
     return () => {
       socket.off("loadCanvas");
@@ -415,7 +417,7 @@ function WhiteBoard() {
         console.log("transforming image", updated[index]);
         const imageWidth = updated[index].width;
         const imageHeight = updated[index].height;
-        socket.emit("transformObejcts", {
+        socket.emit("transformObjects", {
           currentRoom,
           data: {
             type: "image",
@@ -433,8 +435,8 @@ function WhiteBoard() {
     const pointer = stage?.getRelativePointerPosition();
     if (!pointer) return;
 
-    let updatedPencil: any[] = [];
-    let updatedBrush: any[] = [];
+    let updatedPencil: PencilData[] = [];
+    let updatedBrush: BrushData[] = [];
 
     setPencil((prev = []) => {
       updatedPencil = prev.filter(
