@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { Stage, Layer, Line, Circle, Image } from "react-konva";
+import { useState, useRef, useEffect, use } from "react";
+import { Stage, Layer, Line, Circle, Image, Transformer } from "react-konva";
 import SideBar from "../Components/SideBar";
 import {
   useCurrentRoomStore,
@@ -35,6 +35,7 @@ import {
   SheetTrigger,
 } from "@/Components/ui/sheet";
 import ChatBox from "../Components/ChatBox";
+import { Transform } from "stream";
 // Define types
 type PencilData = { points: number[] };
 type LineData = number[];
@@ -49,7 +50,6 @@ function WhiteBoard() {
   const [circle, setCircle] = useState<CircleData[]>([]);
   const [tempCircle, setTempCircle] = useState<LineData | null>(null);
   const [brush, setBrush] = useState<BrushData[]>([]);
-
   const stageRef = useRef<Konva.Stage>(null);
   const [stageScale, setStageScale] = useState(1);
   const [stagePosition, setStagePosition] = useState({ x: 0, y: 0 });
@@ -58,15 +58,35 @@ function WhiteBoard() {
   const [joinRoom, setJoinRoom] = useState("");
   const [erasing, setErasing] = useState(false);
   const { image } = useImagesState();
-  console.log("Image:", image);
   const [newImage] = useImage(image);
   const [localImages, setLocalImages] = useState<HTMLImageElement[]>([]);
+  const imageRefs = useRef<Konva.Image[]>([]);
+  const trRef = useRef<Konva.Transformer>(null);
 
   const { user } = useUser();
 
   const clerkId = user?.id;
 
   const isDrawing = useRef(false);
+
+  useEffect(() => {
+    if (trRef.current && imageRefs.current.length > 0) {
+      trRef.current.nodes(imageRefs.current);
+      trRef.current.getLayer()?.batchDraw();
+    }
+  }, [localImages]);
+  useEffect(() => {
+    socket.emit("updateCanvas", {
+      currentRoom,
+      data: {
+        pencil: [],
+        lines: [],
+        circles: [],
+        brush: [],
+        image: image,
+      },
+    });
+  }, [image, currentRoom]);
 
   useEffect(() => {
     if (!clerkId) return; // Ensure clerkId is available before making the request
@@ -126,6 +146,13 @@ function WhiteBoard() {
       setLines(data.lines || []);
       setCircle(data.circles || []);
       setBrush(data.brush || []);
+      if (data.images && Array.isArray(data.images)) {
+        Promise.all(data.images.map(loadImageFromBase64)).then(
+          (imageElements) => {
+            setLocalImages(imageElements);
+          }
+        );
+      }
     });
     socket.on("eraseLines", (data) => {
       console.log("Received erase lines:", data);
@@ -187,6 +214,15 @@ function WhiteBoard() {
   //     console.log(selectedShape);
   //   }
   // };
+  const loadImageFromBase64 = (base64: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.src = base64;
+      img.onload = () => resolve(img);
+      img.onerror = (err) => reject(err);
+    });
+  };
+
   const handleDragEnd = (
     e: Konva.KonvaEventObject<DragEvent>,
     type: "line" | "circle",
@@ -518,7 +554,7 @@ function WhiteBoard() {
           </SheetTrigger>
           <SheetContent className="bg-white border-b border-gray-200 p-6 rounded-lg">
             <SheetHeader>
-              <SheetTitle>Are you absolutely sure?</SheetTitle>
+              <SheetTitle>Chat with your friends</SheetTitle>
               <SheetDescription></SheetDescription>
               <div>
                 <ChatBox currentRoom={currentRoom} clerkId={clerkId ?? ""} />
@@ -638,6 +674,9 @@ function WhiteBoard() {
             {localImages.map((src, i) => (
               <Image
                 key={i}
+                ref={(node) => {
+                  if (node) imageRefs.current[i] = node;
+                }}
                 image={src}
                 x={50 + i * 20}
                 y={50 + i * 20}
@@ -646,6 +685,7 @@ function WhiteBoard() {
                 draggable
               />
             ))}
+            <Transformer ref={trRef} />
           </Layer>
         </Stage>
       </div>

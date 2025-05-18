@@ -194,7 +194,8 @@ mongoose
           data.pencil,
           data.circles,
           data.lines,
-          data.brush
+          data.brush,
+          data.image
         );
         console.log(updatedBoard);
 

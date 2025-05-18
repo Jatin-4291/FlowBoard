@@ -5,7 +5,8 @@ export const updateBoard = async (
   newPencil,
   newCircles,
   newLines,
-  newBrush
+  newBrush,
+  newImage
 ) => {
   try {
     // Fetch the existing board
@@ -22,6 +23,7 @@ export const updateBoard = async (
     existingBoard.circles.push(...newCircles);
     existingBoard.lines.push(...newLines);
     existingBoard.brush.push(...newBrush);
+    existingBoard.images.push(newImage);
 
     // Save the updated board
     await existingBoard.save();

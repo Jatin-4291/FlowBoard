@@ -16,7 +16,6 @@ const boardSchema = new mongoose.Schema({
   brush: { type: Array, default: [] },
   eraser: { type: Array, default: [] },
   images: { type: Array, default: [] },
-  messages: [messageSchema], // Stores messages per user
 });
 
 const Board = mongoose.model("Board", boardSchema);
