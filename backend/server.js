@@ -218,6 +218,7 @@ mongoose
         console.log(`Dragging objects for room: ${currentRoom}`, data);
 
         const updatedBoard = await dragData(currentRoom, data);
+        console.log(`Dragging objects after: ${updatedBoard}`);
         io.to(currentRoom).emit("dragObjects", data); // just the updated piece
       });
       socket.on("transformObjects", async ({ currentRoom, data }) => {

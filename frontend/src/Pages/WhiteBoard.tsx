@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, use } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Stage, Layer, Line, Circle, Image, Transformer } from "react-konva";
 import SideBar from "../Components/SideBar";
 import {
@@ -12,7 +12,6 @@ import socket from "../socket";
 import UserName from "../Components/UserName";
 import { useUser } from "@clerk/clerk-react";
 import axios from "axios";
-import useImage from "use-image";
 import {
   HoverCard,
   HoverCardContent,
@@ -71,7 +70,6 @@ function WhiteBoard() {
   const [joinRoom, setJoinRoom] = useState("");
   const [erasing, setErasing] = useState(false);
   const { image } = useImagesState();
-  const [newImage] = useImage(image);
   const [localImages, setLocalImages] = useState<ImageData[]>([]);
   const imageRefs = useRef<Konva.Image[]>([]);
   const trRef = useRef<Konva.Transformer>(null);
@@ -83,7 +81,7 @@ function WhiteBoard() {
   const isDrawing = useRef(false);
 
   useEffect(() => {
-    if (!image) return;
+    if (image == "") return;
     socket.emit("updateCanvas", {
       currentRoom,
       data: {
@@ -154,9 +152,7 @@ function WhiteBoard() {
         )
           .then((results) => {
             const imageDataArray: ImageData[] = results
-              .map((res, index) => {
-                console.log(res, index);
-
+              .map((res) => {
                 if (res.status === "fulfilled") {
                   return {
                     image: res.value.image,
@@ -205,8 +201,8 @@ function WhiteBoard() {
       if (data.type === "image") {
         setLocalImages((prev) => {
           const updated = [...prev];
-          updated[data.index].x = data.points.x;
-          updated[data.index].y = data.points.y;
+          updated[data.index].x = data.points[0];
+          updated[data.index].y = data.points[1];
           return updated;
         });
       }
@@ -340,12 +336,14 @@ function WhiteBoard() {
           x: newPos.x,
           y: newPos.y,
         };
+        console.log("dragging image", updated[index]);
+
         socket.emit("dragObjects", {
           currentRoom,
           data: {
             type: "image",
             index,
-            points: updated[index],
+            points: [updated[index].x, updated[index].y],
           },
         });
         return updated;
@@ -353,7 +351,7 @@ function WhiteBoard() {
     }
   };
   const handleTransFormEnd = (
-    e: Konva.KonvaEventObject<DragEvent>,
+    e: Konva.KonvaEventObject<Event>,
     type: "line" | "circle" | "image",
     index: number
   ) => {
