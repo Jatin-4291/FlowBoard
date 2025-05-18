@@ -219,6 +219,10 @@ mongoose
         const updatedBoard = await dragData(currentRoom, data);
         io.to(currentRoom).emit("dragObjects", data); // just the updated piece
       });
+      socket.on("transformObjects", async ({ currentRoom, data }) => {
+        console.log(`Transforming objects for room: ${currentRoom}`, data);
+        const transformObjects = await transformData(currentRoom, data);
+      });
       socket.on("removeAllData", async (currentRoom) => {
         console.log(`Removing all data for room: ${currentRoom}`);
         const removeAll = await removeAllData(currentRoom);

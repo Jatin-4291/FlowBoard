@@ -98,6 +98,34 @@ export const dragData = async (currentRoom, data) => {
     } else if (data.type === "line") {
       const key = `lines.${data.index}.points`;
       update[key] = data.points;
+    } else if (data.type === "image") {
+      const key = `images.${data.index}`;
+      update[key] = { x: data.points.x, y: data.points.y };
+    }
+
+    const updatedBoard = await Board.findOneAndUpdate(
+      { roomId: currentRoom },
+      { $set: update },
+      { new: true } // return the updated doc
+    );
+
+    if (!updatedBoard) {
+      throw new Error("Board not found");
+    }
+
+    return updatedBoard;
+  } catch (error) {
+    console.error("Error updating drag data:", error.message);
+    throw new Error("Error updating drag data");
+  }
+};
+
+export const transformData = async (currentRoom, data) => {
+  try {
+    const update = {};
+    if (data.type === "image") {
+      const key = `images.${data.index}`;
+      update[key] = { width: data.points.width, height: data.points.height };
     }
 
     const updatedBoard = await Board.findOneAndUpdate(

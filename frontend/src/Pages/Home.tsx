@@ -13,7 +13,7 @@ export default function Home() {
   };
   return (
     <div className="relative flex flex-col items-center justify-center h-screen w-full text-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
-      {/* User Button (Top Right) */}
+      {/* Background Gradient */}
       <div className="absolute top-8 right-8 rounded-full">
         <SignedIn>
           <UserButton />

@@ -48,7 +48,7 @@ type ImageData = {
   height: number;
 };
 type IncomingImagePayload = {
-  src: string; // base64
+  image: string;
   x: number;
   y: number;
   width: number;
@@ -125,23 +125,6 @@ function WhiteBoard() {
     console.log("Updated currentRoom:", currentRoom);
   }, [RoomId, currentRoom]);
   useEffect(() => {
-    if (
-      image &&
-      newImage &&
-      !localImages.some((img) => img.image.src === newImage.src)
-    ) {
-      const imageData: ImageData = {
-        image: newImage,
-        x: 50 + localImages.length * 20,
-        y: 50 + localImages.length * 20,
-        width: 100,
-        height: 100,
-      };
-      setLocalImages((prev) => [...prev, imageData]);
-    }
-  }, [newImage, image, localImages]);
-  // ✅ Ensures socket emits only when currentRoom is updated
-  useEffect(() => {
     if (!currentRoom || !clerkId) return;
     if (!currentRoom) return;
     console.log("Joining Room:", currentRoom);
@@ -157,7 +140,6 @@ function WhiteBoard() {
     });
 
     socket.on("updateCanvas", (data) => {
-      console.log("Updating canvas failed");
       console.log("Received update:", data);
 
       setPencil(data.pencil || []);
@@ -176,13 +158,12 @@ function WhiteBoard() {
                 console.log(res, index);
 
                 if (res.status === "fulfilled") {
-                  const baseData = validImages[index];
                   return {
-                    image: res.value,
-                    x: baseData.x,
-                    y: baseData.y,
-                    width: baseData.width,
-                    height: baseData.height,
+                    image: res.value.image,
+                    x: res.value.x,
+                    y: res.value.y,
+                    width: res.value.width,
+                    height: res.value.height,
                   } as ImageData;
                 }
                 return null;
@@ -197,6 +178,7 @@ function WhiteBoard() {
           });
       }
     });
+
     socket.on("eraseLines", (data) => {
       console.log("Received erase lines:", data);
       setPencil(data.pencil || []);
@@ -217,6 +199,14 @@ function WhiteBoard() {
         setLines((prev) => {
           const updated = [...prev];
           updated[data.index] = data.points;
+          return updated;
+        });
+      }
+      if (data.type === "image") {
+        setLocalImages((prev) => {
+          const updated = [...prev];
+          updated[data.index].x = data.points.x;
+          updated[data.index].y = data.points.y;
           return updated;
         });
       }
@@ -265,7 +255,7 @@ function WhiteBoard() {
   ): Promise<ImageData> => {
     return new Promise((resolve, reject) => {
       const img = new window.Image();
-      img.src = data.src;
+      img.src = data.image;
       img.onload = () => {
         resolve({
           image: img,
@@ -323,6 +313,58 @@ function WhiteBoard() {
           currentRoom,
           data: {
             type: "lines",
+            index,
+            points: updated[index],
+          },
+        });
+        return updated;
+      });
+    }
+    if (type === "image") {
+      setLocalImages((prev) => {
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          x: newPos.x,
+          y: newPos.y,
+        };
+        socket.emit("dragObjects", {
+          currentRoom,
+          data: {
+            type: "image",
+            index,
+            points: updated[index],
+          },
+        });
+        return updated;
+      });
+    }
+  };
+  const handleTransFormEnd = (
+    e: Konva.KonvaEventObject<DragEvent>,
+    type: "line" | "circle" | "image",
+    index: number
+  ) => {
+    const node = e.target;
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
+
+    // Reset scale to 1
+    node.scaleX(1);
+    node.scaleY(1);
+
+    if (type === "image") {
+      setLocalImages((prev) => {
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          width: node.width() * scaleX,
+          height: node.height() * scaleY,
+        };
+        socket.emit("transformObejcts", {
+          currentRoom,
+          data: {
+            type: "image",
             index,
             points: updated[index],
           },
@@ -738,13 +780,17 @@ function WhiteBoard() {
                 y={imageData.y}
                 width={imageData.width}
                 height={imageData.height}
-                draggable
+                draggable={activeTool == "picker"}
                 onClick={() => {
                   const node = imageRefs.current[i];
                   if (node && trRef.current) {
                     trRef.current.nodes([node]);
                     trRef.current.getLayer()?.batchDraw();
                   }
+                }}
+                onDragEnd={(e) => handleDragEnd(e, "image", i)}
+                onTransformEnd={(e) => {
+                  handleTransFormEnd(e, "image", i);
                 }}
               />
             ))}
