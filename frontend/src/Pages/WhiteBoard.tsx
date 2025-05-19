@@ -254,8 +254,8 @@ function WhiteBoard() {
       if (data.type === "image") {
         setLocalImages((prev) => {
           const updated = [...prev];
-          updated[data.index].width = data.points.width;
-          updated[data.index].height = data.points.height;
+          updated[data.index].width = data.imageData.width;
+          updated[data.index].height = data.imageData.height;
           return updated;
         });
       }

@@ -136,14 +136,18 @@ export const transformData = async (currentRoom, data) => {
     const updatedBoard = await Board.findOneAndUpdate(
       { roomId: currentRoom },
       { $set: update },
-      { new: true } // return the updated doc
+      { new: true }
     );
 
     if (!updatedBoard) {
       throw new Error("Board not found");
     }
-
-    return updatedBoard;
+    const data = {
+      imageData: updatedBoard.images[index],
+      index,
+      type,
+    };
+    return data;
   } catch (error) {
     console.error("Error updating drag data:", error.message);
     throw new Error("Error updating drag data");
